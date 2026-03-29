@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: postgres:18.3
+    environment:
+    - POSTGRES_DB=device-service
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=P4ssword!
+    ports:
+    - 5433:5432
