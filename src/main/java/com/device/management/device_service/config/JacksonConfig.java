@@ -1,21 +1,18 @@
 package com.device.management.device_service.config;
 
-import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.MapperFeature;
-
 
 @Configuration
 public class JacksonConfig {
 
     @Bean
-    public JsonMapperBuilderCustomizer jacksonCustomizer() {
-        return jsonMapperBuilder -> jsonMapperBuilder
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
-                .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
+    public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
+        return builder -> builder
+                .featuresToEnable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
-
 }

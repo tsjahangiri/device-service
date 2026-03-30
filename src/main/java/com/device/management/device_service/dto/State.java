@@ -1,4 +1,4 @@
-package com.device.management.device_service.model;
+package com.device.management.device_service.dto;
 
 
 public enum State {

@@ -1,6 +1,6 @@
 # Device Service
 
-This service is used to manage devices
+This service is used to manage deviceEntities
 
 ## Development
 
@@ -23,12 +23,12 @@ gradlew clean build
 Start your application with the following command - here with the profile `production`:
 
 ```
-java -Dspring.profiles.active=production -jar ./build/libs/device-service-0.0.1-SNAPSHOT.jar
+java -Dspring.profiles.active=production -jar ./build/libs/deviceEntity-service-0.0.1-SNAPSHOT.jar
 ```
 
 If required, a Docker image can be created with the Spring Boot plugin. Add `SPRING_PROFILES_ACTIVE=production` as environment variable when running the container.
 
 ```
-gradlew bootBuildImage --imageName=com.device.management/device-service
+gradlew bootBuildImage --imageName=com.deviceEntity.management/deviceEntity-service
 ```
 
