@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/device_service
+    username: postgres
+    password: P4ssword!
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+

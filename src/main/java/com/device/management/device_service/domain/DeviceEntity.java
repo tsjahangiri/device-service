@@ -1,17 +1,13 @@
 package com.device.management.device_service.domain;
 
-import com.device.management.device_service.model.State;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
+import com.device.management.device_service.dto.State;
+import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
+import java.util.UUID;
+
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -22,21 +18,26 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class Device {
+@NoArgsConstructor
+@Table(name = "devices")
+public class DeviceEntity {
 
     @Id
     @Column(nullable = false, updatable = false)
     @SequenceGenerator(
-            name = "primary_sequence",
-            sequenceName = "primary_sequence",
+            name = "device_sequence",
+            sequenceName = "device_sequence",
             allocationSize = 1,
             initialValue = 10000
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
-            generator = "primary_sequence"
+            generator = "device_sequence"
     )
     private Long id;
+
+    @Column(nullable = false, updatable = false, unique = true)
+    private UUID deviceId;
 
     @Column(nullable = false)
     private String name;
@@ -56,4 +57,8 @@ public class Device {
     @Column(nullable = false)
     private OffsetDateTime lastUpdated;
 
+    @PrePersist
+    protected void onCreate() {
+        this.deviceId = UUID.randomUUID();
+    }
 }

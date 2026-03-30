@@ -1,68 +1,74 @@
 package com.device.management.device_service.service;
 
-import com.device.management.device_service.domain.Device;
-import com.device.management.device_service.model.DeviceDTO;
-import com.device.management.device_service.repos.DeviceRepository;
+import com.device.management.device_service.domain.DeviceEntity;
+import com.device.management.device_service.dto.request.DeviceRequest;
+import com.device.management.device_service.dto.response.DeviceResponse;
+import com.device.management.device_service.repository.DeviceRepository;
+import com.device.management.device_service.transform.DeviceMapper;
 import com.device.management.device_service.util.NotFoundException;
-import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
 public class DeviceService {
 
     private final DeviceRepository deviceRepository;
+    private final DeviceMapper deviceMapper;
 
-    public DeviceService(final DeviceRepository deviceRepository) {
+    public DeviceService(final DeviceRepository deviceRepository, final DeviceMapper deviceMapper) {
         this.deviceRepository = deviceRepository;
+        this.deviceMapper = deviceMapper;
     }
 
-    public List<DeviceDTO> findAll() {
-        final List<Device> devices = deviceRepository.findAll(Sort.by("id"));
-        return devices.stream()
-                .map(device -> mapToDTO(device, new DeviceDTO()))
+    public DeviceResponse createDevice(final DeviceRequest deviceRequest) {
+        DeviceEntity deviceEntity = this.deviceMapper.toDeviceEntity(deviceRequest);
+        this.deviceRepository.save(deviceEntity);
+        return deviceMapper.toDeviceResponse(deviceEntity);
+    }
+
+    //////// to be refined
+
+    public List<DeviceRequest> findAll() {
+        final List<DeviceEntity> deviceEntities = this.deviceRepository.findAll(Sort.by("id"));
+        return deviceEntities.stream()
+                .map(deviceEntity -> mapToDTO(deviceEntity, new DeviceRequest()))
                 .toList();
     }
 
-    public DeviceDTO get(final Long id) {
-        return deviceRepository.findById(id)
-                .map(device -> mapToDTO(device, new DeviceDTO()))
+    public DeviceRequest get(final Long id) {
+        return this.deviceRepository.findById(id)
+                .map(deviceEntity -> mapToDTO(deviceEntity, new DeviceRequest()))
                 .orElseThrow(NotFoundException::new);
     }
 
-    public Long create(final DeviceDTO deviceDTO) {
-        final Device device = new Device();
-        mapToEntity(deviceDTO, device);
-        return deviceRepository.save(device).getId();
-    }
-
-    public void update(final Long id, final DeviceDTO deviceDTO) {
-        final Device device = deviceRepository.findById(id)
+    public void update(final Long id, final DeviceRequest deviceRequest) {
+        final DeviceEntity deviceEntity = this.deviceRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
-        mapToEntity(deviceDTO, device);
-        deviceRepository.save(device);
+        mapToEntity(deviceRequest, deviceEntity);
+        this.deviceRepository.save(deviceEntity);
     }
 
     public void delete(final Long id) {
-        final Device device = deviceRepository.findById(id)
+        final DeviceEntity deviceEntity = this.deviceRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
-        deviceRepository.delete(device);
+        this.deviceRepository.delete(deviceEntity);
     }
 
-    private DeviceDTO mapToDTO(final Device device, final DeviceDTO deviceDTO) {
-        deviceDTO.setId(device.getId());
-        deviceDTO.setName(device.getName());
-        deviceDTO.setBrand(device.getBrand());
-        deviceDTO.setState(device.getState());
-        return deviceDTO;
+    private DeviceRequest mapToDTO(final DeviceEntity deviceEntity, final DeviceRequest deviceRequest) {
+        deviceRequest.setName(deviceEntity.getName());
+        deviceRequest.setBrand(deviceEntity.getBrand());
+        deviceRequest.setState(deviceEntity.getState());
+        return deviceRequest;
     }
 
-    private Device mapToEntity(final DeviceDTO deviceDTO, final Device device) {
-        device.setName(deviceDTO.getName());
-        device.setBrand(deviceDTO.getBrand());
-        device.setState(deviceDTO.getState());
-        return device;
+    private DeviceEntity mapToEntity(final DeviceRequest deviceRequest, final DeviceEntity deviceEntity) {
+        deviceEntity.setName(deviceRequest.getName());
+        deviceEntity.setBrand(deviceRequest.getBrand());
+        deviceEntity.setState(deviceRequest.getState());
+        return deviceEntity;
     }
 
 }
