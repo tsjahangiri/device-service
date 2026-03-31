@@ -10,18 +10,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DeviceRequest extends DeviceBaseRequest {
+public class DeviceBaseRequest {
 
-    @NotBlank
-    @Override
-    public String getName() { return super.getName(); }
+    @Size(max = 255)
+    private String name;
 
-    @NotBlank
-    @Override
-    public String getBrand() { return super.getBrand(); }
+    @Size(max = 255)
+    private String brand;
 
-    @NotNull
-    @Override
-    public State getState() { return super.getState(); }
+    private State state;
 
 }

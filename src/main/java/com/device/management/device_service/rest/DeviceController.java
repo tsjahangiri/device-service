@@ -1,5 +1,6 @@
 package com.device.management.device_service.rest;
 
+import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
 import com.device.management.device_service.service.DeviceService;
@@ -12,14 +13,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -41,6 +35,22 @@ public class DeviceController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PutMapping("/{deviceId}")
+    public ResponseEntity<DeviceResponse> updateDevice(
+            @PathVariable final UUID deviceId,
+            @RequestBody @Valid final DeviceRequest request) {
+        return ResponseEntity.ok(deviceService.updateDevice(deviceId, request));
+    }
+
+    @PatchMapping("/{deviceId}")
+    public ResponseEntity<DeviceResponse> patchDevice(
+            @PathVariable final UUID deviceId,
+            @RequestBody final DevicePatchRequest request) {
+        return ResponseEntity.ok(deviceService.patchDevice(deviceId, request));
+    }
+
+
+    ////// to be refined
     @GetMapping
     public ResponseEntity<List<DeviceRequest>> getAllDevices() {
         return ResponseEntity.ok(deviceService.findAll());
@@ -49,13 +59,6 @@ public class DeviceController {
     @GetMapping("/{id}")
     public ResponseEntity<DeviceRequest> getDevice(@PathVariable(name = "id") final Long id) {
         return ResponseEntity.ok(deviceService.get(id));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Long> updateDevice(@PathVariable(name = "id") final Long id,
-            @RequestBody @Valid final DeviceRequest deviceRequest) {
-        deviceService.update(id, deviceRequest);
-        return ResponseEntity.ok(id);
     }
 
     @DeleteMapping("/{id}")
