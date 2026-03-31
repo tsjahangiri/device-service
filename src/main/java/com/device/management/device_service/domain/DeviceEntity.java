@@ -22,6 +22,19 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "devices")
 public class DeviceEntity {
 
+    /**
+     * Hybrid identifier strategy — two IDs serve distinct purposes:
+     *
+     * - {@code id} (Long): the internal primary key, used exclusively for database
+     *   operations such as joins, indexing, and sequence generation. A numeric sequence
+     *   ensures ordered, cache-friendly inserts and allows Hibernate to batch operations
+     *   efficiently. This field is never exposed outside the persistence layer.
+     *
+     * - {@code deviceId} (UUID): the public-facing identifier exposed through the API.
+     *   Decoupling the external identity from the internal primary key prevents sequential
+     *   ID enumeration attacks, hides the internal data model, and ensures the public
+     *   contract remains stable regardless of any internal schema changes.
+     */
     @Id
     @Column(nullable = false, updatable = false)
     @SequenceGenerator(

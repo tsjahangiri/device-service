@@ -9,24 +9,25 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.UUID;
 
+import static com.device.management.device_service.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DeviceMapperTest {
+
+    private static final String UPDATED_NAME = "New Name";
+    private static final String UPDATED_BRAND = "New Brand";
 
     private final DeviceMapper deviceMapper = Mappers.getMapper(DeviceMapper.class);
 
     @Test
     void toDeviceEntity_mapsCorrectly() {
-        final DeviceRequest request = new DeviceRequest();
-        request.setName("iPhone 15 Pro");
-        request.setBrand("Apple");
-        request.setState(State.AVAILABLE);
+        final DeviceRequest request = buildValidRequest();
 
         final DeviceEntity entity = deviceMapper.toDeviceEntity(request);
 
-        assertThat(entity.getName()).isEqualTo("iPhone 15 Pro");
-        assertThat(entity.getBrand()).isEqualTo("Apple");
-        assertThat(entity.getState()).isEqualTo(State.AVAILABLE);
+        assertThat(entity.getName()).isEqualTo(DEFAULT_NAME);
+        assertThat(entity.getBrand()).isEqualTo(DEFAULT_BRAND);
+        assertThat(entity.getState()).isEqualTo(DEFAULT_STATE);
         assertThat(entity.getId()).isNull();
         assertThat(entity.getDeviceId()).isNull();
         assertThat(entity.getDateCreated()).isNull();
@@ -35,36 +36,26 @@ public class DeviceMapperTest {
 
     @Test
     void toDeviceResponse_mapsCorrectly() {
-        final DeviceEntity entity = new DeviceEntity();
-        entity.setDeviceId(UUID.randomUUID());
-        entity.setName("iPhone 15 Pro");
-        entity.setBrand("Apple");
-        entity.setState(State.AVAILABLE);
+        final UUID deviceId = UUID.randomUUID();
+        final DeviceEntity entity = buildEntity(deviceId, DEFAULT_STATE);
 
         final DeviceResponse response = deviceMapper.toDeviceResponse(entity);
 
-        assertThat(response.getDeviceId()).isEqualTo(entity.getDeviceId());
-        assertThat(response.getName()).isEqualTo("iPhone 15 Pro");
-        assertThat(response.getBrand()).isEqualTo("Apple");
-        assertThat(response.getState()).isEqualTo(State.AVAILABLE);
+        assertThat(response.getDeviceId()).isEqualTo(deviceId);
+        assertThat(response.getName()).isEqualTo(DEFAULT_NAME);
+        assertThat(response.getBrand()).isEqualTo(DEFAULT_BRAND);
+        assertThat(response.getState()).isEqualTo(DEFAULT_STATE);
     }
 
     @Test
     void updateDeviceEntity_updatesOnlyMappedFields() {
-        final DeviceEntity entity = new DeviceEntity();
-        entity.setName("Old Name");
-        entity.setBrand("Old Brand");
-        entity.setState(State.AVAILABLE);
-
-        final DeviceRequest request = new DeviceRequest();
-        request.setName("New Name");
-        request.setBrand("New Brand");
-        request.setState(State.IN_USE);
+        final DeviceEntity entity = buildEntity(DEFAULT_STATE);
+        final DeviceRequest request = buildRequest(UPDATED_NAME, UPDATED_BRAND, State.IN_USE);
 
         deviceMapper.updateDeviceEntity(request, entity);
 
-        assertThat(entity.getName()).isEqualTo("New Name");
-        assertThat(entity.getBrand()).isEqualTo("New Brand");
+        assertThat(entity.getName()).isEqualTo(UPDATED_NAME);
+        assertThat(entity.getBrand()).isEqualTo(UPDATED_BRAND);
         assertThat(entity.getState()).isEqualTo(State.IN_USE);
     }
 }

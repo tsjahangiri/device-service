@@ -7,6 +7,8 @@ import com.device.management.device_service.dto.response.DeviceResponse;
 import com.device.management.device_service.service.DeviceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/api/devices", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Devices", description = "Device management API")
 public class DeviceController {
 
     private final DeviceService deviceService;
@@ -29,14 +32,25 @@ public class DeviceController {
 
     @PostMapping
     @Operation(summary = "Create a new device")
-    @ApiResponse(responseCode = "201", description = "Device created successfully")
-    @ApiResponse(responseCode = "400", description = "Invalid input")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Device created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "500", description = "Database error")
+    })
     public ResponseEntity<DeviceResponse> createDevice(@RequestBody @Valid final DeviceRequest deviceRequest) {
         final DeviceResponse response = deviceService.createDevice(deviceRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{deviceId}")
+    @Operation(summary = "Fully update an existing device")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Device updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Device not found"),
+            @ApiResponse(responseCode = "409", description = "Device is in use, name and brand cannot be updated"),
+            @ApiResponse(responseCode = "500", description = "Database error")
+    })
     public ResponseEntity<DeviceResponse> updateDevice(
             @PathVariable final UUID deviceId,
             @RequestBody @Valid final DeviceRequest request) {
@@ -44,6 +58,13 @@ public class DeviceController {
     }
 
     @PatchMapping("/{deviceId}")
+    @Operation(summary = "Partially update an existing device")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Device patched successfully"),
+            @ApiResponse(responseCode = "404", description = "Device not found"),
+            @ApiResponse(responseCode = "409", description = "Device is in use, name and brand cannot be updated"),
+            @ApiResponse(responseCode = "500", description = "Database error")
+    })
     public ResponseEntity<DeviceResponse> patchDevice(
             @PathVariable final UUID deviceId,
             @RequestBody final DevicePatchRequest request) {
@@ -52,8 +73,10 @@ public class DeviceController {
 
     @GetMapping("/{deviceId}")
     @Operation(summary = "Get a device by ID")
-    @ApiResponse(responseCode = "200", description = "Device found")
-    @ApiResponse(responseCode = "404", description = "Device not found")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Device found"),
+            @ApiResponse(responseCode = "404", description = "Device not found")
+    })
     public ResponseEntity<DeviceResponse> getDevice(
             @PathVariable final UUID deviceId) {
         return ResponseEntity.ok(deviceService.getDevice(deviceId));
@@ -61,24 +84,23 @@ public class DeviceController {
 
     @GetMapping
     @Operation(summary = "Get all devices, optionally filtered by brand or state")
-    @ApiResponse(responseCode = "200", description = "Devices retrieved successfully")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Devices retrieved successfully")
+    })
     public ResponseEntity<List<DeviceResponse>> getDevices(
             @RequestParam(required = false) final String brand,
             @RequestParam(required = false) final State state) {
-        if (brand != null) {
-            return ResponseEntity.ok(deviceService.getDevicesByBrand(brand));
-        }
-        if (state != null) {
-            return ResponseEntity.ok(deviceService.getDevicesByState(state));
-        }
-        return ResponseEntity.ok(deviceService.getAllDevices());
+        return ResponseEntity.ok(deviceService.getDevices(brand, state));
     }
 
     @DeleteMapping("/{deviceId}")
     @Operation(summary = "Delete a device by ID")
-    @ApiResponse(responseCode = "204", description = "Device deleted successfully")
-    @ApiResponse(responseCode = "404", description = "Device not found")
-    @ApiResponse(responseCode = "409", description = "Device is in use and cannot be deleted")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Device deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Device not found"),
+            @ApiResponse(responseCode = "409", description = "Device is in use and cannot be deleted"),
+            @ApiResponse(responseCode = "500", description = "Database error")
+    })
     public ResponseEntity<Void> deleteDevice(
             @PathVariable final UUID deviceId) {
         deviceService.deleteDevice(deviceId);
