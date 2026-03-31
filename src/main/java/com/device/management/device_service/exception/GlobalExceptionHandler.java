@@ -24,6 +24,14 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(DeviceNotDeletableException.class)
+    public ResponseEntity<ErrorResponse> handleDeviceNotDeletable(
+            final DeviceNotDeletableException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             final Exception ex) {

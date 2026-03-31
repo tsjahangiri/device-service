@@ -5,6 +5,7 @@ import com.device.management.device_service.dto.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
+import com.device.management.device_service.exception.DeviceNotDeletableException;
 import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotUpdatableException;
 import com.device.management.device_service.repository.DeviceRepository;
@@ -71,32 +72,42 @@ public class DeviceService {
         return this.deviceMapper.toDeviceResponse(deviceEntity);
     }
 
-    //////// to be refined
+    public DeviceResponse getDevice(final UUID deviceId) {
+        return this.deviceRepository.findByDeviceId(deviceId)
+                .map(this.deviceMapper::toDeviceResponse)
+                .orElseThrow(() -> new DeviceNotFoundException(deviceId));
+    }
 
-    public List<DeviceRequest> findAll() {
-        final List<DeviceEntity> deviceEntities = this.deviceRepository.findAll(Sort.by("id"));
-        return deviceEntities.stream()
-                .map(deviceEntity -> mapToDTO(deviceEntity, new DeviceRequest()))
+    public List<DeviceResponse> getAllDevices() {
+        return this.deviceRepository.findAll()
+                .stream()
+                .map(this.deviceMapper::toDeviceResponse)
                 .toList();
     }
 
-    public DeviceRequest get(final Long id) {
-        return this.deviceRepository.findById(id)
-                .map(deviceEntity -> mapToDTO(deviceEntity, new DeviceRequest()))
-                .orElseThrow(NotFoundException::new);
+    public List<DeviceResponse> getDevicesByBrand(final String brand) {
+        return this.deviceRepository.findByBrand(brand)
+                .stream()
+                .map(this.deviceMapper::toDeviceResponse)
+                .toList();
     }
 
-    public void delete(final Long id) {
-        final DeviceEntity deviceEntity = this.deviceRepository.findById(id)
-                .orElseThrow(NotFoundException::new);
+    public List<DeviceResponse> getDevicesByState(final State state) {
+        return this.deviceRepository.findByState(state)
+                .stream()
+                .map(this.deviceMapper::toDeviceResponse)
+                .toList();
+    }
+
+    public void deleteDevice(final UUID deviceId) {
+        final DeviceEntity deviceEntity = this.deviceRepository.findByDeviceId(deviceId)
+                .orElseThrow(() -> new DeviceNotFoundException(deviceId));
+
+        if (deviceEntity.getState() == State.IN_USE) {
+            throw new DeviceNotDeletableException(deviceId);
+        }
+
         this.deviceRepository.delete(deviceEntity);
-    }
-
-    private DeviceRequest mapToDTO(final DeviceEntity deviceEntity, final DeviceRequest deviceRequest) {
-        deviceRequest.setName(deviceEntity.getName());
-        deviceRequest.setBrand(deviceEntity.getBrand());
-        deviceRequest.setState(deviceEntity.getState());
-        return deviceRequest;
     }
 
 }
