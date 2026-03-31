@@ -5,8 +5,8 @@ import com.device.management.device_service.dto.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
-import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotDeletableException;
+import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotUpdatableException;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
@@ -89,7 +89,7 @@ public class DeviceServiceTest {
         when(deviceRepository.findAll()).thenReturn(List.of(entity1, entity2));
         when(deviceMapper.toDeviceResponse(any())).thenReturn(new DeviceResponse());
 
-        final List<DeviceResponse> result = deviceService.getAllDevices();
+        final List<DeviceResponse> result = deviceService.getDevices(null, null);
 
         assertThat(result).hasSize(2);
     }
@@ -100,7 +100,7 @@ public class DeviceServiceTest {
         when(deviceRepository.findByBrand("Apple")).thenReturn(List.of(entity));
         when(deviceMapper.toDeviceResponse(entity)).thenReturn(new DeviceResponse());
 
-        final List<DeviceResponse> result = deviceService.getDevicesByBrand("Apple");
+        final List<DeviceResponse> result = deviceService.getDevices("Apple", null);
 
         assertThat(result).hasSize(1);
     }
@@ -111,7 +111,7 @@ public class DeviceServiceTest {
         when(deviceRepository.findByState(State.AVAILABLE)).thenReturn(List.of(entity));
         when(deviceMapper.toDeviceResponse(entity)).thenReturn(new DeviceResponse());
 
-        final List<DeviceResponse> result = deviceService.getDevicesByState(State.AVAILABLE);
+        final List<DeviceResponse> result = deviceService.getDevices(null, State.AVAILABLE);
 
         assertThat(result).hasSize(1);
     }
