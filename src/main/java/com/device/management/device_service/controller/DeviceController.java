@@ -1,4 +1,4 @@
-package com.device.management.device_service.rest;
+package com.device.management.device_service.controller;
 
 import com.device.management.device_service.dto.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
