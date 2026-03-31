@@ -1,6 +1,5 @@
 package com.device.management.device_service.domain;
 
-import com.device.management.device_service.dto.State;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;

@@ -1,9 +1,8 @@
 package com.device.management.device_service.dto.request;
 
-import com.device.management.device_service.dto.State;
+import com.device.management.device_service.domain.State;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 

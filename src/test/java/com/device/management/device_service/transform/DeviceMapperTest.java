@@ -1,7 +1,7 @@
 package com.device.management.device_service.transform;
 
 import com.device.management.device_service.domain.DeviceEntity;
-import com.device.management.device_service.dto.State;
+import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
 import org.junit.jupiter.api.Test;

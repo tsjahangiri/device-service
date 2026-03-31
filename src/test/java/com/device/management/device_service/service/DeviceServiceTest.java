@@ -1,13 +1,14 @@
 package com.device.management.device_service.service;
 
 import com.device.management.device_service.domain.DeviceEntity;
-import com.device.management.device_service.dto.State;
+import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
 import com.device.management.device_service.exception.DeviceNotDeletableException;
 import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotUpdatableException;
+import com.device.management.device_service.exception.InvalidFilterException;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -99,17 +104,21 @@ public class DeviceServiceTest {
         final DeviceResponse response1 = buildValidResponse(deviceId1);
         final DeviceResponse response2 = buildValidResponse(deviceId2);
 
-        when(deviceRepository.findAll()).thenReturn(List.of(entity1, entity2));
+        final Pageable pageable = PageRequest.of(0, 20);
+        final Page<DeviceEntity> entityPage = new PageImpl<>(List.of(entity1, entity2), pageable, 2);
+
+        when(deviceRepository.findAll(pageable)).thenReturn(entityPage);
         when(deviceMapper.toDeviceResponse(entity1)).thenReturn(response1);
         when(deviceMapper.toDeviceResponse(entity2)).thenReturn(response2);
 
-        final List<DeviceResponse> result = deviceService.getDevices(null, null);
+        final Page<DeviceResponse> result = deviceService.getDevices(null, null, pageable);
 
-        assertThat(result).hasSize(2);
-        assertThat(result).containsExactly(response1, response2);
-        verify(deviceRepository).findAll();
-        verify(deviceRepository, never()).findByBrand(any());
-        verify(deviceRepository, never()).findByState(any());
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent()).containsExactly(response1, response2);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        verify(deviceRepository).findAll(pageable);
+        verify(deviceRepository, never()).findByBrand(any(), any());
+        verify(deviceRepository, never()).findByState(any(), any());
     }
 
     @Test
@@ -118,16 +127,20 @@ public class DeviceServiceTest {
         final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
         final DeviceResponse response = buildValidResponse(deviceId);
 
-        when(deviceRepository.findByBrand("Apple")).thenReturn(List.of(entity));
+        final Pageable pageable = PageRequest.of(0, 20);
+        final Page<DeviceEntity> entityPage = new PageImpl<>(List.of(entity), pageable, 1);
+
+        when(deviceRepository.findByBrand(DEFAULT_BRAND, pageable)).thenReturn(entityPage);
         when(deviceMapper.toDeviceResponse(entity)).thenReturn(response);
 
-        final List<DeviceResponse> result = deviceService.getDevices("Apple", null);
+        final Page<DeviceResponse> result = deviceService.getDevices(DEFAULT_BRAND, null, pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getDeviceId()).isEqualTo(deviceId);
-        verify(deviceRepository).findByBrand("Apple");
-        verify(deviceRepository, never()).findAll();
-        verify(deviceRepository, never()).findByState(any());
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getDeviceId()).isEqualTo(deviceId);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(deviceRepository).findByBrand(DEFAULT_BRAND, pageable);
+        verify(deviceRepository, never()).findAll(any(Pageable.class));
+        verify(deviceRepository, never()).findByState(any(), any());
     }
 
     @Test
@@ -136,33 +149,33 @@ public class DeviceServiceTest {
         final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
         final DeviceResponse response = buildValidResponse(deviceId);
 
-        when(deviceRepository.findByState(State.AVAILABLE)).thenReturn(List.of(entity));
+        final Pageable pageable = PageRequest.of(0, 20);
+        final Page<DeviceEntity> entityPage = new PageImpl<>(List.of(entity), pageable, 1);
+
+        when(deviceRepository.findByState(State.AVAILABLE, pageable)).thenReturn(entityPage);
         when(deviceMapper.toDeviceResponse(entity)).thenReturn(response);
 
-        final List<DeviceResponse> result = deviceService.getDevices(null, State.AVAILABLE);
+        final Page<DeviceResponse> result = deviceService.getDevices(null, State.AVAILABLE, pageable);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getDeviceId()).isEqualTo(deviceId);
-        verify(deviceRepository).findByState(State.AVAILABLE);
-        verify(deviceRepository, never()).findAll();
-        verify(deviceRepository, never()).findByBrand(any());
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getDeviceId()).isEqualTo(deviceId);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(deviceRepository).findByState(State.AVAILABLE, pageable);
+        verify(deviceRepository, never()).findAll(any(Pageable.class));
+        verify(deviceRepository, never()).findByBrand(any(), any());
     }
 
     @Test
-    void getDevices_withBrandAndState_brandTakesPrecedence() {
-        final UUID deviceId = UUID.randomUUID();
-        final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
-        final DeviceResponse response = buildValidResponse(deviceId);
+    void getDevices_withBrandAndState_throwsInvalidFilterException() {
+        final Pageable pageable = PageRequest.of(0, 20);
 
-        when(deviceRepository.findByBrand("Apple")).thenReturn(List.of(entity));
-        when(deviceMapper.toDeviceResponse(entity)).thenReturn(response);
+        assertThatThrownBy(() -> deviceService.getDevices(DEFAULT_BRAND, State.AVAILABLE, pageable))
+                .isInstanceOf(InvalidFilterException.class)
+                .hasMessageContaining("Only one filter parameter is allowed");
 
-        final List<DeviceResponse> result = deviceService.getDevices("Apple", State.AVAILABLE);
-
-        assertThat(result).hasSize(1);
-        verify(deviceRepository).findByBrand("Apple");
-        verify(deviceRepository, never()).findByState(any());
-        verify(deviceRepository, never()).findAll();
+        verify(deviceRepository, never()).findAll(any(Pageable.class));
+        verify(deviceRepository, never()).findByBrand(any(), any());
+        verify(deviceRepository, never()).findByState(any(), any());
     }
 
     // ─── FULL UPDATE ───────────────────────────────────────────────────────
