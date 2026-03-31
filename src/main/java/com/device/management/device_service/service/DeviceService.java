@@ -14,6 +14,8 @@ import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,18 +86,19 @@ public class DeviceService {
     }
 
     @Transactional(readOnly = true)
-    public List<DeviceResponse> getDevices(final String brand, final State state) {
+    public Page<DeviceResponse> getDevices(final String brand, final State state,
+                                           final Pageable pageable) {
         if (brand != null && state != null) {
             throw new InvalidFilterException(
                     "Only one filter parameter is allowed at a time: 'brand' or 'state'");
         }
         if (brand != null) {
-            return getDevicesByBrand(brand);
+            return getDevicesByBrand(brand, pageable);
         }
         if (state != null) {
-            return getDevicesByState(state);
+            return getDevicesByState(state, pageable);
         }
-        return getAllDevices();
+        return getAllDevices(pageable);
     }
 
     @Transactional
@@ -116,25 +119,19 @@ public class DeviceService {
                 .orElseThrow(() -> new DeviceNotFoundException(deviceId));
     }
 
-    private List<DeviceResponse> getAllDevices() {
-        return this.deviceRepository.findAll()
-                .stream()
-                .map(this.deviceMapper::toDeviceResponse)
-                .toList();
+    private Page<DeviceResponse> getAllDevices(final Pageable pageable) {
+        return this.deviceRepository.findAll(pageable)
+                .map(this.deviceMapper::toDeviceResponse);
     }
 
-    private List<DeviceResponse> getDevicesByBrand(final String brand) {
-        return this.deviceRepository.findByBrand(brand)
-                .stream()
-                .map(this.deviceMapper::toDeviceResponse)
-                .toList();
+    private Page<DeviceResponse> getDevicesByBrand(final String brand, final Pageable pageable) {
+        return this.deviceRepository.findByBrand(brand, pageable)
+                .map(this.deviceMapper::toDeviceResponse);
     }
 
-    private List<DeviceResponse> getDevicesByState(final State state) {
-        return this.deviceRepository.findByState(state)
-                .stream()
-                .map(this.deviceMapper::toDeviceResponse)
-                .toList();
+    private Page<DeviceResponse> getDevicesByState(final State state, final Pageable pageable) {
+        return this.deviceRepository.findByState(state, pageable)
+                .map(this.deviceMapper::toDeviceResponse);
     }
 
     private DeviceEntity persistSave(final DeviceEntity deviceEntity) {

@@ -13,6 +13,10 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -88,10 +92,12 @@ public class DeviceController {
             @ApiResponse(responseCode = "200", description = "Devices retrieved successfully"),
             @ApiResponse(responseCode = "400", description = "Both brand and state filters provided simultaneously")
     })
-    public ResponseEntity<List<DeviceResponse>> getDevices(
+    public ResponseEntity<Page<DeviceResponse>> getDevices(
             @RequestParam(required = false) final String brand,
-            @RequestParam(required = false) final State state) {
-        return ResponseEntity.ok(deviceService.getDevices(brand, state));
+            @RequestParam(required = false) final State state,
+            @PageableDefault(size = 20, sort = "dateCreated", direction = Sort.Direction.DESC)
+            final Pageable pageable) {
+        return ResponseEntity.ok(deviceService.getDevices(brand, state, pageable));
     }
 
     @DeleteMapping("/{deviceId}")

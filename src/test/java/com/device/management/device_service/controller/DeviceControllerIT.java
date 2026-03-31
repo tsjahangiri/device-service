@@ -1,6 +1,7 @@
 package com.device.management.device_service.controller;
 
 import com.device.management.device_service.BaseIntegrationTest;
+import com.device.management.device_service.TestFactory;
 import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
@@ -99,11 +100,12 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
         createDevice(GALAXY_NAME, SAMSUNG_BRAND, State.IN_USE);
 
-        final ResponseEntity<DeviceResponse[]> response = restTemplate
-                .getForEntity(baseUrl(), DeviceResponse[].class);
+        final ResponseEntity<DevicePage> response = restTemplate
+                .getForEntity(baseUrl(), DevicePage.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).hasSize(2);
+        assertThat(response.getBody().content).hasSize(2);
+        assertThat(response.getBody().totalElements).isEqualTo(2);
     }
 
     @Test
@@ -112,12 +114,13 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         createDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
         createDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
-        final ResponseEntity<DeviceResponse[]> response = restTemplate
-                .getForEntity(baseUrl() + "?brand=" + DEFAULT_BRAND, DeviceResponse[].class);
+        final ResponseEntity<DevicePage> response = restTemplate
+                .getForEntity(baseUrl() + "?brand=" + DEFAULT_BRAND, DevicePage.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).hasSize(2);
-        assertThat(response.getBody())
+        assertThat(response.getBody().content).hasSize(2);
+        assertThat(response.getBody().totalElements).isEqualTo(2);
+        assertThat(response.getBody().content)
                 .allMatch(d -> d.getBrand().equals(DEFAULT_BRAND));
     }
 
@@ -127,12 +130,13 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         createDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
         createDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
-        final ResponseEntity<DeviceResponse[]> response = restTemplate
-                .getForEntity(baseUrl() + "?state=" + DEFAULT_STATE, DeviceResponse[].class);
+        final ResponseEntity<DevicePage> response = restTemplate
+                .getForEntity(baseUrl() + "?state=" + DEFAULT_STATE, DevicePage.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).hasSize(2);
-        assertThat(response.getBody())
+        assertThat(response.getBody().content).hasSize(2);
+        assertThat(response.getBody().totalElements).isEqualTo(2);
+        assertThat(response.getBody().content)
                 .allMatch(d -> d.getState() == DEFAULT_STATE);
     }
 
@@ -142,6 +146,21 @@ public class DeviceControllerIT extends BaseIntegrationTest {
                 .getForEntity(baseUrl() + "?brand=" + DEFAULT_BRAND + "&state=" + DEFAULT_STATE, Void.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void getDevices_respectsPageSize() {
+        createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        createDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
+        createDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
+
+        final ResponseEntity<DevicePage> response = restTemplate
+                .getForEntity(baseUrl() + "?size=2&page=0", DevicePage.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().content).hasSize(2);
+        assertThat(response.getBody().totalElements).isEqualTo(3);
+        assertThat(response.getBody().totalPages).isEqualTo(2);
     }
 
     // ─── FULL UPDATE OF DEVICES ───────────────────────────────────────────────────

@@ -5,17 +5,24 @@ import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 
 public final class TestFactory {
 
-    // ─── Default values ────────────────────────────────────────────────────
-
     public static final String DEFAULT_NAME = "iPhone 15 Pro";
     public static final String DEFAULT_BRAND = "Apple";
     public static final State DEFAULT_STATE = State.AVAILABLE;
+
+    public static class DevicePage {
+        public List<DeviceResponse> content;
+        public int totalElements;
+        public int totalPages;
+        public int size;
+        public int number;
+    }
 
     // ─── DeviceRequest ─────────────────────────────────────────────────────
 

@@ -10,6 +10,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -70,10 +72,12 @@ public class DeviceRepositoryTest {
         saveDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
         saveDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
-        final List<DeviceEntity> result = deviceRepository.findByBrand(DEFAULT_BRAND);
+        final Page<DeviceEntity> result = deviceRepository.findByBrand(
+                DEFAULT_BRAND, PageRequest.of(0, 20));
 
-        assertThat(result).hasSize(2);
-        assertThat(result).allMatch(d -> d.getBrand().equals(DEFAULT_BRAND));
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent()).allMatch(d -> d.getBrand().equals(DEFAULT_BRAND));
+        assertThat(result.getTotalElements()).isEqualTo(2);
     }
 
     @Test
@@ -82,10 +86,12 @@ public class DeviceRepositoryTest {
         saveDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
         saveDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
-        final List<DeviceEntity> result = deviceRepository.findByState(DEFAULT_STATE);
+        final Page<DeviceEntity> result = deviceRepository.findByState(
+                DEFAULT_STATE, PageRequest.of(0, 20));
 
-        assertThat(result).hasSize(2);
-        assertThat(result).allMatch(d -> d.getState() == DEFAULT_STATE);
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent()).allMatch(d -> d.getState() == DEFAULT_STATE);
+        assertThat(result.getTotalElements()).isEqualTo(2);
     }
 
     // ─── HELPERS ───────────────────────────────────────────────────────────
