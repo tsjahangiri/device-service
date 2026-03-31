@@ -30,10 +30,6 @@ public abstract class BaseIntegrationTest {
     @LocalServerPort
     protected int port;
 
-    static {
-        postgres.withReuse(true);
-    }
-
     @BeforeEach
     void cleanUp() {
         deviceRepository.deleteAll();
