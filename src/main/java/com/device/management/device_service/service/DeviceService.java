@@ -5,7 +5,11 @@ import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
-import com.device.management.device_service.exception.*;
+import com.device.management.device_service.exception.DataPersistenceException;
+import com.device.management.device_service.exception.DeviceNotDeletableException;
+import com.device.management.device_service.exception.DeviceNotFoundException;
+import com.device.management.device_service.exception.DeviceNotUpdatableException;
+import com.device.management.device_service.exception.InvalidFilterException;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.springframework.dao.DataAccessException;
@@ -16,14 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-
 @Service
 public class DeviceService {
 
     private final DeviceRepository deviceRepository;
     private final DeviceMapper deviceMapper;
 
-    public DeviceService(final DeviceRepository deviceRepository, final DeviceMapper deviceMapper) {
+    public DeviceService(final DeviceRepository deviceRepository,
+                         final DeviceMapper deviceMapper) {
         this.deviceRepository = deviceRepository;
         this.deviceMapper = deviceMapper;
     }
@@ -31,26 +35,26 @@ public class DeviceService {
     @Transactional
     public DeviceResponse createDevice(final DeviceRequest deviceRequest) {
         final DeviceEntity deviceEntity = this.deviceMapper.toDeviceEntity(deviceRequest);
-        final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
+        final DeviceEntity savedEntity = persistSave(deviceEntity);
         return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
+    @Transactional
     public DeviceResponse updateDevice(final UUID deviceId, final DeviceRequest deviceRequest) {
-        final DeviceEntity deviceEntity = this.deviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new DeviceNotFoundException(deviceId));
+        final DeviceEntity deviceEntity = findByDeviceIdOrThrow(deviceId);
 
         if (deviceEntity.getState() == State.IN_USE) {
             throw new DeviceNotUpdatableException(deviceId);
         }
 
         this.deviceMapper.updateDeviceEntity(deviceRequest, deviceEntity);
-        final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
+        final DeviceEntity savedEntity = persistSave(deviceEntity);
         return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
+    @Transactional
     public DeviceResponse patchDevice(final UUID deviceId, final DevicePatchRequest deviceRequest) {
-        final DeviceEntity deviceEntity = this.deviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new DeviceNotFoundException(deviceId));
+        final DeviceEntity deviceEntity = findByDeviceIdOrThrow(deviceId);
 
         if (deviceEntity.getState() == State.IN_USE) {
             if (deviceRequest.getName() != null || deviceRequest.getBrand() != null) {
@@ -68,7 +72,7 @@ public class DeviceService {
             deviceEntity.setState(deviceRequest.getState());
         }
 
-        final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
+        final DeviceEntity savedEntity = persistSave(deviceEntity);
         return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
@@ -79,9 +83,11 @@ public class DeviceService {
                 .orElseThrow(() -> new DeviceNotFoundException(deviceId));
     }
 
+    @Transactional(readOnly = true)
     public List<DeviceResponse> getDevices(final String brand, final State state) {
         if (brand != null && state != null) {
-            throw new InvalidFilterException("Only one filter parameter is allowed at a time: 'brand' or 'state'");
+            throw new InvalidFilterException(
+                    "Only one filter parameter is allowed at a time: 'brand' or 'state'");
         }
         if (brand != null) {
             return getDevicesByBrand(brand);
@@ -92,18 +98,23 @@ public class DeviceService {
         return getAllDevices();
     }
 
+    @Transactional
     public void deleteDevice(final UUID deviceId) {
-        final DeviceEntity deviceEntity = this.deviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new DeviceNotFoundException(deviceId));
+        final DeviceEntity deviceEntity = findByDeviceIdOrThrow(deviceId);
 
         if (deviceEntity.getState() == State.IN_USE) {
             throw new DeviceNotDeletableException(deviceId);
         }
 
-        this.deleteDevice(deviceEntity);
+        persistDelete(deviceEntity);
     }
 
     // ─── Private helpers ───────────────────────────────────────────────────
+
+    private DeviceEntity findByDeviceIdOrThrow(final UUID deviceId) {
+        return this.deviceRepository.findByDeviceId(deviceId)
+                .orElseThrow(() -> new DeviceNotFoundException(deviceId));
+    }
 
     private List<DeviceResponse> getAllDevices() {
         return this.deviceRepository.findAll()
@@ -126,17 +137,19 @@ public class DeviceService {
                 .toList();
     }
 
-    private DeviceEntity saveDevice(final DeviceEntity deviceEntity) {
+    private DeviceEntity persistSave(final DeviceEntity deviceEntity) {
         try {
             return this.deviceRepository.save(deviceEntity);
         } catch (DataIntegrityViolationException ex) {
-            throw new DataPersistenceException("Device could not be saved due to a data integrity violation");
+            throw new DataPersistenceException(
+                    "Device could not be saved due to a data integrity violation");
         } catch (DataAccessException ex) {
-            throw new DataPersistenceException("Device could not be saved due to a database error");
+            throw new DataPersistenceException(
+                    "Device could not be saved due to a database error");
         }
     }
 
-    private void deleteDevice(final DeviceEntity deviceEntity) {
+    private void persistDelete(final DeviceEntity deviceEntity) {
         try {
             this.deviceRepository.delete(deviceEntity);
         } catch (DataAccessException ex) {
@@ -144,5 +157,4 @@ public class DeviceService {
                     "Device could not be deleted due to a database error");
         }
     }
-
 }
