@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.device.management.device_service.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -27,6 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(DomainConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class DeviceRepositoryTest {
+
+    private static final String MACBOOK_NAME = "MacBook Pro";
+    private static final String SAMSUNG_BRAND = "Samsung";
+    private static final String GALAXY_NAME = "Galaxy S24";
 
     @Container
     @ServiceConnection
@@ -42,12 +47,14 @@ public class DeviceRepositoryTest {
 
     @Test
     void findByDeviceId_existingDevice_returnsDevice() {
-        final DeviceEntity saved = saveDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
+        final DeviceEntity saved = saveDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
 
         final Optional<DeviceEntity> result = deviceRepository.findByDeviceId(saved.getDeviceId());
 
         assertThat(result).isPresent();
-        assertThat(result.get().getName()).isEqualTo("iPhone 15 Pro");
+        assertThat(result.get().getName()).isEqualTo(DEFAULT_NAME);
+        assertThat(result.get().getBrand()).isEqualTo(DEFAULT_BRAND);
+        assertThat(result.get().getState()).isEqualTo(DEFAULT_STATE);
     }
 
     @Test
@@ -59,35 +66,31 @@ public class DeviceRepositoryTest {
 
     @Test
     void findByBrand_returnsOnlyMatchingBrand() {
-        saveDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        saveDevice("MacBook Pro", "Apple", State.IN_USE);
-        saveDevice("Galaxy S24", "Samsung", State.AVAILABLE);
+        saveDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        saveDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
+        saveDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
-        final List<DeviceEntity> result = deviceRepository.findByBrand("Apple");
+        final List<DeviceEntity> result = deviceRepository.findByBrand(DEFAULT_BRAND);
 
         assertThat(result).hasSize(2);
-        assertThat(result).allMatch(d -> d.getBrand().equals("Apple"));
+        assertThat(result).allMatch(d -> d.getBrand().equals(DEFAULT_BRAND));
     }
 
     @Test
     void findByState_returnsOnlyMatchingState() {
-        saveDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        saveDevice("MacBook Pro", "Apple", State.IN_USE);
-        saveDevice("Galaxy S24", "Samsung", State.AVAILABLE);
+        saveDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        saveDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
+        saveDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
-        final List<DeviceEntity> result = deviceRepository.findByState(State.AVAILABLE);
+        final List<DeviceEntity> result = deviceRepository.findByState(DEFAULT_STATE);
 
         assertThat(result).hasSize(2);
-        assertThat(result).allMatch(d -> d.getState() == State.AVAILABLE);
+        assertThat(result).allMatch(d -> d.getState() == DEFAULT_STATE);
     }
 
     // ─── HELPERS ───────────────────────────────────────────────────────────
 
     private DeviceEntity saveDevice(final String name, final String brand, final State state) {
-        final DeviceEntity entity = new DeviceEntity();
-        entity.setName(name);
-        entity.setBrand(brand);
-        entity.setState(state);
-        return deviceRepository.save(entity);
+        return deviceRepository.save(buildEntity(name, brand, state));
     }
 }

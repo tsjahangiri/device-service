@@ -13,16 +13,21 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
-import static com.device.management.device_service.TestFactory.buildRequest;
+import static com.device.management.device_service.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DeviceControllerIT extends BaseIntegrationTest {
+
+    private static final String UPDATED_NAME = "iPhone 16 Pro";
+    private static final String SAMSUNG_BRAND = "Samsung";
+    private static final String MACBOOK_NAME = "MacBook Pro";
+    private static final String GALAXY_NAME = "Galaxy S24";
 
     // ─── CREATE DEVICE ────────────────────────────────────────────────────────────
 
     @Test
     void createDevice_validRequest_returns201() {
-        final DeviceRequest request = buildRequest("iPhone 15 Pro", "Apple", State.AVAILABLE);
+        final DeviceRequest request = buildValidRequest();
 
         final ResponseEntity<DeviceResponse> response = restTemplate
                 .postForEntity(baseUrl(), request, DeviceResponse.class);
@@ -30,14 +35,14 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getDeviceId()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("iPhone 15 Pro");
-        assertThat(response.getBody().getBrand()).isEqualTo("Apple");
-        assertThat(response.getBody().getState()).isEqualTo(State.AVAILABLE);
+        assertThat(response.getBody().getName()).isEqualTo(DEFAULT_NAME);
+        assertThat(response.getBody().getBrand()).isEqualTo(DEFAULT_BRAND);
+        assertThat(response.getBody().getState()).isEqualTo(DEFAULT_STATE);
     }
 
     @Test
     void createDevice_missingName_returns400() {
-        final DeviceRequest request = buildRequest(null, "Apple", State.AVAILABLE);
+        final DeviceRequest request = buildRequest(null, DEFAULT_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<Void> response = restTemplate
                 .postForEntity(baseUrl(), request, Void.class);
@@ -47,7 +52,7 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void createDevice_missingBrand_returns400() {
-        final DeviceRequest request = buildRequest("iPhone 15 Pro", null, State.AVAILABLE);
+        final DeviceRequest request = buildRequest(DEFAULT_NAME, null, DEFAULT_STATE);
 
         final ResponseEntity<Void> response = restTemplate
                 .postForEntity(baseUrl(), request, Void.class);
@@ -57,7 +62,7 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void createDevice_missingState_returns400() {
-        final DeviceRequest request = buildRequest("iPhone 15 Pro", "Apple", null);
+        final DeviceRequest request = buildRequest(DEFAULT_NAME, DEFAULT_BRAND, null);
 
         final ResponseEntity<Void> response = restTemplate
                 .postForEntity(baseUrl(), request, Void.class);
@@ -69,7 +74,7 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void getDevice_existingDevice_returns200() {
-        final UUID deviceId = createDevice("MacBook Pro", "Apple", State.AVAILABLE);
+        final UUID deviceId = createDevice(MACBOOK_NAME, DEFAULT_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<DeviceResponse> response = restTemplate
                 .getForEntity(baseUrl() + "/" + deviceId, DeviceResponse.class);
@@ -87,12 +92,12 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    // ─── GET ALL / FILTER DEVICES ──────────────────────────────────────────────────
+    // ─── GET ALL / FILTER DEVICES ─────────────────────────────────────────────────
 
     @Test
     void getAllDevices_returnsAllDevices() {
-        createDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        createDevice("Galaxy S24", "Samsung", State.IN_USE);
+        createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        createDevice(GALAXY_NAME, SAMSUNG_BRAND, State.IN_USE);
 
         final ResponseEntity<DeviceResponse[]> response = restTemplate
                 .getForEntity(baseUrl(), DeviceResponse[].class);
@@ -103,40 +108,40 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void getDevicesByBrand_returnsFilteredDevices() {
-        createDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        createDevice("MacBook Pro", "Apple", State.IN_USE);
-        createDevice("Galaxy S24", "Samsung", State.AVAILABLE);
+        createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        createDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
+        createDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<DeviceResponse[]> response = restTemplate
-                .getForEntity(baseUrl() + "?brand=Apple", DeviceResponse[].class);
+                .getForEntity(baseUrl() + "?brand=" + DEFAULT_BRAND, DeviceResponse[].class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).hasSize(2);
         assertThat(response.getBody())
-                .allMatch(d -> d.getBrand().equals("Apple"));
+                .allMatch(d -> d.getBrand().equals(DEFAULT_BRAND));
     }
 
     @Test
     void getDevicesByState_returnsFilteredDevices() {
-        createDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        createDevice("MacBook Pro", "Apple", State.IN_USE);
-        createDevice("Galaxy S24", "Samsung", State.AVAILABLE);
+        createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        createDevice(MACBOOK_NAME, DEFAULT_BRAND, State.IN_USE);
+        createDevice(GALAXY_NAME, SAMSUNG_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<DeviceResponse[]> response = restTemplate
-                .getForEntity(baseUrl() + "?state=AVAILABLE", DeviceResponse[].class);
+                .getForEntity(baseUrl() + "?state=" + DEFAULT_STATE, DeviceResponse[].class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).hasSize(2);
         assertThat(response.getBody())
-                .allMatch(d -> d.getState() == State.AVAILABLE);
+                .allMatch(d -> d.getState() == DEFAULT_STATE);
     }
 
-    // ─── FULL UPDATE OF DEVICES ───────────────────────────────────────────────────────
+    // ─── FULL UPDATE OF DEVICES ───────────────────────────────────────────────────
 
     @Test
     void updateDevice_validRequest_returns200() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        final DeviceRequest request = buildRequest("iPhone 16 Pro", "Apple", State.AVAILABLE);
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        final DeviceRequest request = buildRequest(UPDATED_NAME, DEFAULT_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<DeviceResponse> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -145,13 +150,13 @@ public class DeviceControllerIT extends BaseIntegrationTest {
                 DeviceResponse.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().getName()).isEqualTo("iPhone 16 Pro");
+        assertThat(response.getBody().getName()).isEqualTo(UPDATED_NAME);
     }
 
     @Test
     void updateDevice_deviceInUse_returns409() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.IN_USE);
-        final DeviceRequest request = buildRequest("iPhone 16 Pro", "Apple", State.IN_USE);
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, State.IN_USE);
+        final DeviceRequest request = buildRequest(UPDATED_NAME, DEFAULT_BRAND, State.IN_USE);
 
         final ResponseEntity<Void> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -164,7 +169,7 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void updateDevice_nonExistentDevice_returns404() {
-        final DeviceRequest request = buildRequest("iPhone 16 Pro", "Apple", State.AVAILABLE);
+        final DeviceRequest request = buildRequest(UPDATED_NAME, DEFAULT_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<Void> response = restTemplate.exchange(
                 baseUrl() + "/" + UUID.randomUUID(),
@@ -175,13 +180,12 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    // ─── PARTIAL UPDATE OF DEVICES ────────────────────────────────────────────────────
+    // ─── PARTIAL UPDATE OF DEVICES ────────────────────────────────────────────────
 
     @Test
     void patchDevice_stateOnly_returns200() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
-        final DevicePatchRequest request = new DevicePatchRequest();
-        request.setState(State.IN_USE);
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
+        final DevicePatchRequest request = buildPatchRequestWithState(State.IN_USE);
 
         final ResponseEntity<DeviceResponse> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -195,9 +199,8 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void patchDevice_nameChangeOnInUseDevice_returns409() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.IN_USE);
-        final DevicePatchRequest request = new DevicePatchRequest();
-        request.setName("iPhone 16 Pro");
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, State.IN_USE);
+        final DevicePatchRequest request = buildPatchRequestWithName(UPDATED_NAME);
 
         final ResponseEntity<Void> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -210,9 +213,8 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void patchDevice_stateChangeOnInUseDevice_returns200() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.IN_USE);
-        final DevicePatchRequest request = new DevicePatchRequest();
-        request.setState(State.INACTIVE);
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, State.IN_USE);
+        final DevicePatchRequest request = buildPatchRequestWithState(State.INACTIVE);
 
         final ResponseEntity<DeviceResponse> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -228,7 +230,7 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void deleteDevice_availableDevice_returns204() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.AVAILABLE);
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, DEFAULT_STATE);
 
         final ResponseEntity<Void> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -242,7 +244,7 @@ public class DeviceControllerIT extends BaseIntegrationTest {
 
     @Test
     void deleteDevice_inUseDevice_returns409() {
-        final UUID deviceId = createDevice("iPhone 15 Pro", "Apple", State.IN_USE);
+        final UUID deviceId = createDevice(DEFAULT_NAME, DEFAULT_BRAND, State.IN_USE);
 
         final ResponseEntity<Void> response = restTemplate.exchange(
                 baseUrl() + "/" + deviceId,
@@ -264,12 +266,11 @@ public class DeviceControllerIT extends BaseIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    // ─── HELPER METHODS ────────────────────────────────────────────────────────────
+    // ─── HELPER METHODS ───────────────────────────────────────────────────────────
 
     private UUID createDevice(final String name, final String brand, final State state) {
-        final DeviceRequest request = buildRequest(name, brand, state);
         final ResponseEntity<DeviceResponse> response = restTemplate
-                .postForEntity(baseUrl(), request, DeviceResponse.class);
+                .postForEntity(baseUrl(), buildRequest(name, brand, state), DeviceResponse.class);
         return response.getBody().getDeviceId();
     }
 }
