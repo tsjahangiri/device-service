@@ -10,8 +10,6 @@ import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotUpdatableException;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
-import com.device.management.device_service.util.NotFoundException;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
