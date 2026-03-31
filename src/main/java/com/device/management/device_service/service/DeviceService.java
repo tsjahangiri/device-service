@@ -79,25 +79,14 @@ public class DeviceService {
                 .orElseThrow(() -> new DeviceNotFoundException(deviceId));
     }
 
-    public List<DeviceResponse> getAllDevices() {
-        return this.deviceRepository.findAll()
-                .stream()
-                .map(this.deviceMapper::toDeviceResponse)
-                .toList();
-    }
-
-    public List<DeviceResponse> getDevicesByBrand(final String brand) {
-        return this.deviceRepository.findByBrand(brand)
-                .stream()
-                .map(this.deviceMapper::toDeviceResponse)
-                .toList();
-    }
-
-    public List<DeviceResponse> getDevicesByState(final State state) {
-        return this.deviceRepository.findByState(state)
-                .stream()
-                .map(this.deviceMapper::toDeviceResponse)
-                .toList();
+    public List<DeviceResponse> getDevices(final String brand, final State state) {
+        if (brand != null) {
+            return getDevicesByBrand(brand);
+        }
+        if (state != null) {
+            return getDevicesByState(state);
+        }
+        return getAllDevices();
     }
 
     public void deleteDevice(final UUID deviceId) {
@@ -112,6 +101,27 @@ public class DeviceService {
     }
 
     // ─── Private helpers ───────────────────────────────────────────────────
+
+    private List<DeviceResponse> getAllDevices() {
+        return this.deviceRepository.findAll()
+                .stream()
+                .map(this.deviceMapper::toDeviceResponse)
+                .toList();
+    }
+
+    private List<DeviceResponse> getDevicesByBrand(final String brand) {
+        return this.deviceRepository.findByBrand(brand)
+                .stream()
+                .map(this.deviceMapper::toDeviceResponse)
+                .toList();
+    }
+
+    private List<DeviceResponse> getDevicesByState(final State state) {
+        return this.deviceRepository.findByState(state)
+                .stream()
+                .map(this.deviceMapper::toDeviceResponse)
+                .toList();
+    }
 
     private DeviceEntity saveDevice(final DeviceEntity deviceEntity) {
         try {
