@@ -1,8 +1,12 @@
 package com.device.management.device_service.dto.response;
 
 import com.device.management.device_service.domain.State;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 
@@ -16,5 +20,6 @@ public class DeviceResponse {
     private String name;
     private String brand;
     private State state;
+    private OffsetDateTime dateCreated;
 
 }

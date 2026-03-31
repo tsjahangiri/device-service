@@ -85,7 +85,8 @@ public class DeviceController {
     @GetMapping
     @Operation(summary = "Get all devices, optionally filtered by brand or state")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Devices retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Devices retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Both brand and state filters provided simultaneously")
     })
     public ResponseEntity<List<DeviceResponse>> getDevices(
             @RequestParam(required = false) final String brand,

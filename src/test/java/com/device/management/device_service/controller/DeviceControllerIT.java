@@ -136,6 +136,14 @@ public class DeviceControllerIT extends BaseIntegrationTest {
                 .allMatch(d -> d.getState() == DEFAULT_STATE);
     }
 
+    @Test
+    void getDevices_withBrandAndState_returns400() {
+        final ResponseEntity<Void> response = restTemplate
+                .getForEntity(baseUrl() + "?brand=" + DEFAULT_BRAND + "&state=" + DEFAULT_STATE, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     // ─── FULL UPDATE OF DEVICES ───────────────────────────────────────────────────
 
     @Test

@@ -8,6 +8,7 @@ import com.device.management.device_service.dto.response.DeviceResponse;
 import com.device.management.device_service.exception.DeviceNotDeletableException;
 import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotUpdatableException;
+import com.device.management.device_service.exception.InvalidFilterException;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.junit.jupiter.api.Test;
@@ -118,14 +119,14 @@ public class DeviceServiceTest {
         final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
         final DeviceResponse response = buildValidResponse(deviceId);
 
-        when(deviceRepository.findByBrand("Apple")).thenReturn(List.of(entity));
+        when(deviceRepository.findByBrand(DEFAULT_BRAND)).thenReturn(List.of(entity));
         when(deviceMapper.toDeviceResponse(entity)).thenReturn(response);
 
-        final List<DeviceResponse> result = deviceService.getDevices("Apple", null);
+        final List<DeviceResponse> result = deviceService.getDevices(DEFAULT_BRAND, null);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getDeviceId()).isEqualTo(deviceId);
-        verify(deviceRepository).findByBrand("Apple");
+        verify(deviceRepository).findByBrand(DEFAULT_BRAND);
         verify(deviceRepository, never()).findAll();
         verify(deviceRepository, never()).findByState(any());
     }
@@ -149,20 +150,14 @@ public class DeviceServiceTest {
     }
 
     @Test
-    void getDevices_withBrandAndState_brandTakesPrecedence() {
-        final UUID deviceId = UUID.randomUUID();
-        final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
-        final DeviceResponse response = buildValidResponse(deviceId);
+    void getDevices_withBrandAndState_throwsInvalidFilterException() {
+        assertThatThrownBy(() -> deviceService.getDevices(DEFAULT_BRAND, State.AVAILABLE))
+                .isInstanceOf(InvalidFilterException.class)
+                .hasMessageContaining("Only one filter parameter is allowed");
 
-        when(deviceRepository.findByBrand("Apple")).thenReturn(List.of(entity));
-        when(deviceMapper.toDeviceResponse(entity)).thenReturn(response);
-
-        final List<DeviceResponse> result = deviceService.getDevices("Apple", State.AVAILABLE);
-
-        assertThat(result).hasSize(1);
-        verify(deviceRepository).findByBrand("Apple");
-        verify(deviceRepository, never()).findByState(any());
         verify(deviceRepository, never()).findAll();
+        verify(deviceRepository, never()).findByBrand(any());
+        verify(deviceRepository, never()).findByState(any());
     }
 
     // ─── FULL UPDATE ───────────────────────────────────────────────────────

@@ -5,10 +5,7 @@ import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
-import com.device.management.device_service.exception.DataPersistenceException;
-import com.device.management.device_service.exception.DeviceNotDeletableException;
-import com.device.management.device_service.exception.DeviceNotFoundException;
-import com.device.management.device_service.exception.DeviceNotUpdatableException;
+import com.device.management.device_service.exception.*;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.springframework.dao.DataAccessException;
@@ -83,6 +80,9 @@ public class DeviceService {
     }
 
     public List<DeviceResponse> getDevices(final String brand, final State state) {
+        if (brand != null && state != null) {
+            throw new InvalidFilterException("Only one filter parameter is allowed at a time: 'brand' or 'state'");
+        }
         if (brand != null) {
             return getDevicesByBrand(brand);
         }
