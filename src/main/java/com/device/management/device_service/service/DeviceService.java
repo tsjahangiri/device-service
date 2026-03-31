@@ -1,7 +1,7 @@
 package com.device.management.device_service.service;
 
 import com.device.management.device_service.domain.DeviceEntity;
-import com.device.management.device_service.dto.State;
+import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
@@ -14,6 +14,7 @@ import com.device.management.device_service.transform.DeviceMapper;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +31,9 @@ public class DeviceService {
         this.deviceMapper = deviceMapper;
     }
 
+    @Transactional
     public DeviceResponse createDevice(final DeviceRequest deviceRequest) {
-        DeviceEntity deviceEntity = this.deviceMapper.toDeviceEntity(deviceRequest);
+        final DeviceEntity deviceEntity = this.deviceMapper.toDeviceEntity(deviceRequest);
         final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
         return this.deviceMapper.toDeviceResponse(savedEntity);
     }
@@ -73,6 +75,7 @@ public class DeviceService {
         return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
+    @Transactional(readOnly = true)
     public DeviceResponse getDevice(final UUID deviceId) {
         return this.deviceRepository.findByDeviceId(deviceId)
                 .map(this.deviceMapper::toDeviceResponse)

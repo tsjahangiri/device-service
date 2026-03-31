@@ -1,6 +1,6 @@
 package com.device.management.device_service.dto.response;
 
-import com.device.management.device_service.dto.State;
+import com.device.management.device_service.domain.State;
 import lombok.*;
 
 import java.util.UUID;

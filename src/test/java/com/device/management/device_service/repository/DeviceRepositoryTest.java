@@ -2,7 +2,7 @@ package com.device.management.device_service.repository;
 
 import com.device.management.device_service.config.DomainConfig;
 import com.device.management.device_service.domain.DeviceEntity;
-import com.device.management.device_service.dto.State;
+import com.device.management.device_service.domain.State;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
