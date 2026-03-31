@@ -5,11 +5,14 @@ import com.device.management.device_service.dto.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
+import com.device.management.device_service.exception.DataPersistenceException;
 import com.device.management.device_service.exception.DeviceNotDeletableException;
 import com.device.management.device_service.exception.DeviceNotFoundException;
 import com.device.management.device_service.exception.DeviceNotUpdatableException;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,8 +32,8 @@ public class DeviceService {
 
     public DeviceResponse createDevice(final DeviceRequest deviceRequest) {
         DeviceEntity deviceEntity = this.deviceMapper.toDeviceEntity(deviceRequest);
-        this.deviceRepository.save(deviceEntity);
-        return this.deviceMapper.toDeviceResponse(deviceEntity);
+        final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
+        return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
     public DeviceResponse updateDevice(final UUID deviceId, final DeviceRequest deviceRequest) {
@@ -42,8 +45,8 @@ public class DeviceService {
         }
 
         this.deviceMapper.updateDeviceEntity(deviceRequest, deviceEntity);
-        this.deviceRepository.save(deviceEntity);
-        return this.deviceMapper.toDeviceResponse(deviceEntity);
+        final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
+        return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
     public DeviceResponse patchDevice(final UUID deviceId, final DevicePatchRequest deviceRequest) {
@@ -66,8 +69,8 @@ public class DeviceService {
             deviceEntity.setState(deviceRequest.getState());
         }
 
-        this.deviceRepository.save(deviceEntity);
-        return this.deviceMapper.toDeviceResponse(deviceEntity);
+        final DeviceEntity savedEntity = this.saveDevice(deviceEntity);
+        return this.deviceMapper.toDeviceResponse(savedEntity);
     }
 
     public DeviceResponse getDevice(final UUID deviceId) {
@@ -105,7 +108,28 @@ public class DeviceService {
             throw new DeviceNotDeletableException(deviceId);
         }
 
-        this.deviceRepository.delete(deviceEntity);
+        this.deleteDevice(deviceEntity);
+    }
+
+    // ─── Private helpers ───────────────────────────────────────────────────
+
+    private DeviceEntity saveDevice(final DeviceEntity deviceEntity) {
+        try {
+            return this.deviceRepository.save(deviceEntity);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DataPersistenceException("Device could not be saved due to a data integrity violation");
+        } catch (DataAccessException ex) {
+            throw new DataPersistenceException("Device could not be saved due to a database error");
+        }
+    }
+
+    private void deleteDevice(final DeviceEntity deviceEntity) {
+        try {
+            this.deviceRepository.delete(deviceEntity);
+        } catch (DataAccessException ex) {
+            throw new DataPersistenceException(
+                    "Device could not be deleted due to a database error");
+        }
     }
 
 }

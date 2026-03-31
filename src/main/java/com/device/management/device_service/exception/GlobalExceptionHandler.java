@@ -48,6 +48,14 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(message));
     }
 
+    @ExceptionHandler(DataPersistenceException.class)
+    public ResponseEntity<ErrorResponse> handleDataPersistenceException(
+            final DataPersistenceException ex) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             final Exception ex) {
