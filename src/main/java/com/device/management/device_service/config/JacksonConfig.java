@@ -12,7 +12,6 @@ public class JacksonConfig {
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
         return builder -> builder
-                .featuresToEnable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-                .featuresToDisable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+                .featuresToEnable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
     }
 }
