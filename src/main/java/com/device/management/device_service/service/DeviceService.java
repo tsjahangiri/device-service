@@ -59,15 +59,18 @@ public class DeviceService {
             }
         }
 
-        if (deviceRequest.getName() != null) {
-            deviceEntity.setName(deviceRequest.getName());
-        }
-        if (deviceRequest.getBrand() != null) {
-            deviceEntity.setBrand(deviceRequest.getBrand());
-        }
-        if (deviceRequest.getState() != null) {
-            deviceEntity.setState(deviceRequest.getState());
-        }
+//        if (deviceRequest.getName() != null) {
+//            deviceEntity.setName(deviceRequest.getName());
+//        }
+//        if (deviceRequest.getBrand() != null) {
+//            deviceEntity.setBrand(deviceRequest.getBrand());
+//        }
+//        if (deviceRequest.getState() != null) {
+//            deviceEntity.setState(deviceRequest.getState());
+//        }
+
+        //Let the Mapper do the heavy lifting (No more 'if' statements!)
+        this.deviceMapper.updateEntityFromPatch(deviceRequest, deviceEntity);
 
         final DeviceEntity savedEntity = persistSave(deviceEntity);
         return this.deviceMapper.toDeviceResponse(savedEntity);

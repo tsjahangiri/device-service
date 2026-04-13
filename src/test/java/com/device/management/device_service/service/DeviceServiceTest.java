@@ -5,10 +5,7 @@ import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
-import com.device.management.device_service.exception.DeviceNotDeletableException;
-import com.device.management.device_service.exception.DeviceNotFoundException;
-import com.device.management.device_service.exception.DeviceNotUpdatableException;
-import com.device.management.device_service.exception.InvalidFilterException;
+import com.device.management.device_service.exception.*;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.junit.jupiter.api.Test;
@@ -16,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +60,37 @@ public class DeviceServiceTest {
         verify(deviceRepository).save(entity);
         assertThat(result).isEqualTo(expectedResponse);
         assertThat(result.getDeviceId()).isEqualTo(deviceId);
+    }
+
+    //added missing negative tests
+
+    @Test
+    void createDevice_dataIntegrityViolation_throwsDataPersistenceException() {
+        final DeviceRequest request = buildValidRequest();
+        final DeviceEntity entity = buildEntity(State.AVAILABLE);
+
+        when(deviceMapper.toDeviceEntity(request)).thenReturn(entity);
+        when(deviceRepository.save(entity))
+                .thenThrow(new DataIntegrityViolationException("unique constraint violated"));
+
+        assertThatThrownBy(() -> deviceService.createDevice(request))
+                .isInstanceOf(DataPersistenceException.class)
+                .hasMessageContaining("data integrity violation");
+    }
+
+    @Test
+    void createDevice_databaseError_throwsDataPersistenceException() {
+        final DeviceRequest request = buildValidRequest();
+        final DeviceEntity entity = buildEntity(State.AVAILABLE);
+
+        when(deviceMapper.toDeviceEntity(request)).thenReturn(entity);
+        when(deviceRepository.save(entity))
+                .thenThrow(new DataAccessException("connection lost") {});
+        // DataAccessException is abstract so {} creates anonymous subclass
+
+        assertThatThrownBy(() -> deviceService.createDevice(request))
+                .isInstanceOf(DataPersistenceException.class)
+                .hasMessageContaining("database error");
     }
 
     // ─── GET SINGLE ────────────────────────────────────────────────────────
@@ -224,6 +254,22 @@ public class DeviceServiceTest {
                 .hasMessageContaining(deviceId.toString());
     }
 
+    //missing test
+    @Test
+    void updateDevice_dataIntegrityViolation_throwsDataPersistenceException() {
+        final UUID deviceId = UUID.randomUUID();
+        final DeviceRequest request = buildValidRequest();
+        final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
+
+        when(deviceRepository.findByDeviceId(deviceId)).thenReturn(Optional.of(entity));
+        when(deviceRepository.save(entity))
+                .thenThrow(new DataIntegrityViolationException("constraint violated"));
+
+        assertThatThrownBy(() -> deviceService.updateDevice(deviceId, request))
+                .isInstanceOf(DataPersistenceException.class)
+                .hasMessageContaining("data integrity violation");
+    }
+
     // ─── PARTIAL UPDATE ────────────────────────────────────────────────────
 
     @Test
@@ -339,5 +385,19 @@ public class DeviceServiceTest {
         assertThatThrownBy(() -> deviceService.deleteDevice(deviceId))
                 .isInstanceOf(DeviceNotFoundException.class)
                 .hasMessageContaining(deviceId.toString());
+    }
+
+    @Test
+    void deleteDevice_dataAccessException_throwsDataPersistenceException() {
+        final UUID deviceId = UUID.randomUUID();
+        final DeviceEntity entity = buildEntity(deviceId, State.AVAILABLE);
+
+        when(deviceRepository.findByDeviceId(deviceId)).thenReturn(Optional.of(entity));
+        doThrow(new DataAccessException("connection lost") {})
+                .when(deviceRepository).delete(entity);
+
+        assertThatThrownBy(() -> deviceService.deleteDevice(deviceId))
+                .isInstanceOf(DataPersistenceException.class)
+                .hasMessageContaining("database error");
     }
 }

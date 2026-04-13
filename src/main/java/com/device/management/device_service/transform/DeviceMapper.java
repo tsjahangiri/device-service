@@ -1,11 +1,10 @@
 package com.device.management.device_service.transform;
 
 import com.device.management.device_service.domain.DeviceEntity;
+import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface DeviceMapper {
@@ -27,5 +26,8 @@ public interface DeviceMapper {
     @Mapping(target = "dateCreated", ignore = true)
     @Mapping(target = "lastUpdated", ignore = true)
     void updateDeviceEntity(DeviceRequest request, @MappingTarget DeviceEntity entity);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntityFromPatch(DevicePatchRequest dto, @MappingTarget DeviceEntity entity);
 
 }

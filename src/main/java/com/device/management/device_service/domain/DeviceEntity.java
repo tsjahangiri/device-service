@@ -69,6 +69,18 @@ public class DeviceEntity {
     @Column(nullable = false)
     private OffsetDateTime lastUpdated;
 
+    /**
+     * Optimistic locking version field.
+     * Hibernate automatically increments this on every update and includes
+     * it in the WHERE clause to detect concurrent modification.
+     * If two requests read the same version and both try to save,
+     * the second one will fail with OptimisticLockException — preventing
+     * a silent lost update.
+     */
+//    @Version
+//    @Column(nullable = false)
+//    private Long version;
+
     @PrePersist
     protected void onCreate() {
         this.deviceId = UUID.randomUUID();
