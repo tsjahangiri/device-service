@@ -1,7 +1,6 @@
 package com.device.management.device_service.controller;
 
 import com.device.management.device_service.BaseIntegrationTest;
-import com.device.management.device_service.TestFactory;
 import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;

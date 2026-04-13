@@ -5,11 +5,7 @@ import com.device.management.device_service.domain.State;
 import com.device.management.device_service.dto.request.DevicePatchRequest;
 import com.device.management.device_service.dto.request.DeviceRequest;
 import com.device.management.device_service.dto.response.DeviceResponse;
-import com.device.management.device_service.exception.DataPersistenceException;
-import com.device.management.device_service.exception.DeviceNotDeletableException;
-import com.device.management.device_service.exception.DeviceNotFoundException;
-import com.device.management.device_service.exception.DeviceNotUpdatableException;
-import com.device.management.device_service.exception.InvalidFilterException;
+import com.device.management.device_service.exception.*;
 import com.device.management.device_service.repository.DeviceRepository;
 import com.device.management.device_service.transform.DeviceMapper;
 import org.springframework.dao.DataAccessException;
@@ -19,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -64,15 +59,18 @@ public class DeviceService {
             }
         }
 
-        if (deviceRequest.getName() != null) {
-            deviceEntity.setName(deviceRequest.getName());
-        }
-        if (deviceRequest.getBrand() != null) {
-            deviceEntity.setBrand(deviceRequest.getBrand());
-        }
-        if (deviceRequest.getState() != null) {
-            deviceEntity.setState(deviceRequest.getState());
-        }
+//        if (deviceRequest.getName() != null) {
+//            deviceEntity.setName(deviceRequest.getName());
+//        }
+//        if (deviceRequest.getBrand() != null) {
+//            deviceEntity.setBrand(deviceRequest.getBrand());
+//        }
+//        if (deviceRequest.getState() != null) {
+//            deviceEntity.setState(deviceRequest.getState());
+//        }
+
+        //Let the Mapper do the heavy lifting (No more 'if' statements!)
+        this.deviceMapper.updateEntityFromPatch(deviceRequest, deviceEntity);
 
         final DeviceEntity savedEntity = persistSave(deviceEntity);
         return this.deviceMapper.toDeviceResponse(savedEntity);
